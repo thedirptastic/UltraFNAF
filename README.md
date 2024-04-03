@@ -4,8 +4,10 @@ A simple mod that will launch FNAF (or really any game) on death. It is preset t
 You can also use steam links, like `steam://rungameid/70` as executable paths. Just put the game link in the config.
 ## Building
 Install dotnet version 6.0.420
-`git clone https://github.com/thedirptastic/UltraFNAF.git`
-`cd UltraFNAF`
-`dotnet build -p:ULTRAKILLPath="ULTRAKILL Path"`
+```
+git clone https://github.com/thedirptastic/UltraFNAF.git
+cd UltraFNAF
+dotnet build -p:ULTRAKILLPath="ULTRAKILL Path"
+```
 
 You must also have your Assembly-CSharp.dll in ULTRAKILL_Data/Managed/Stripped and a copy of Configgy in the libs folder.
