@@ -6,30 +6,30 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Diagnostics;
+using Object = UnityEngine.Object;
+using Configgy;
+using System.Runtime.InteropServices;
 
 namespace FNAF
 {
     // Load plugin
-    [BepInPlugin("com.derp.fnaf", "har har har", "1.0.0")]
+    [BepInPlugin("com.derp.fnaf", "UltraFNAF", "1.0.0")]
+    [BepInDependency("Hydraxous.ULTRAKILL.Configgy", BepInDependency.DependencyFlags.HardDependency)]
     public class Plugin : BaseUnityPlugin
     {
-        public ConfigFile customFile = new ConfigFile(Path.Combine(Paths.ConfigPath, "FNAF.cfg"), true);
-        public ConfigEntry<string> FNAFPath; // Change to public
+        private ConfigBuilder config;
 
         public static Plugin Instance;
 
         private void Awake()
         {
-            FNAFPath = customFile.Bind("General", // The section under which the option is shown
-                "FNAFPath", // The key of the configuration option in the configuration file
-                "C:/Program Files (x86)/Steam/steamapps/common/Five Nights at Freddy's 2/FiveNightsatFreddys2.exe", // The default value
-                "Where your FNAF game is installed (or any other game ig). HEY READ THIS: MAKE SURE TO USE / SYMBOLS AND NOT \\. THE GAME WILL NOT WORK IF YOU USE THESE"); // Description of the option to show in the config file
+            config = new ConfigBuilder("com.derp.fnaf", "UltraFNAF");
+            config.BuildAll();
 
             Instance = this;
-            // Plugin startup logic
             Logger.LogInfo("Loaded plugin.");
-            // I have no idea what I'm doing
             Harmony har = new Harmony("com.derp.fnaf");
             har.PatchAll();
         }
@@ -39,17 +39,42 @@ namespace FNAF
     [HarmonyPatch(typeof(LaughingSkull), nameof(LaughingSkull.PlayAudio))]
     class PatchDeath // : MonoBehaviour
     {
+        // Import the necessary function from user32.dll
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        private const int SW_MINIMIZE = 6;
+
         static void Postfix()
-        {
-            string path = Application.dataPath;
+        {   
+            if(FNAFConfig.modEnabled.Value) {
+                string path = FNAFConfig.gamePath;
+                bool close = FNAFConfig.deathClose.Value;
 
-            Plugin plugin = Plugin.Instance; // Accessing the Plugin instance
-            string FNAFPath = plugin.FNAFPath.Value; // Accessing the FNAFPath variable
+                Process.Start(path);
 
-            // Start the process with the FNAFPath
-            Process.Start(FNAFPath);
-
-            Application.Quit();
+                if (!close)
+                {
+                    Application.Quit();
+                }
+                else
+                {
+                    // Minimize the window using platform-specific functionality
+                    IntPtr hWnd = Process.GetCurrentProcess().MainWindowHandle;
+                    ShowWindow(hWnd, SW_MINIMIZE);
+                }
+            }
         }
+    }
+    public class FNAFConfig : MonoBehaviour
+    {
+        [Configgable("", "Enable Mod")]
+        public static ConfigToggle modEnabled = new ConfigToggle(true);
+
+        [Configgable("", "Game Path")]
+        public static string gamePath = "C:/Program Files (x86)/Steam/steamapps/common/Five Nights at Freddy's 2/FiveNightsatFreddys2.exe";
+
+        [Configgable("", "Minimize Game on Death")]
+        public static ConfigToggle deathClose = new ConfigToggle(false);
     }
 }
