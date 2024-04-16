@@ -25,8 +25,8 @@ namespace FNAF
 
         private void Awake()
         {
-            config = new ConfigBuilder("com.derp.fnaf", "UltraFNAF");
-            config.BuildAll();
+            this.config = new ConfigBuilder("com.derp.fnaf", "UltraFNAF");
+            this.config.BuildAll();
 
             Instance = this;
             Logger.LogInfo("Loaded plugin.");
@@ -36,7 +36,7 @@ namespace FNAF
     }
 
     // Death behavior
-    [HarmonyPatch(typeof(LaughingSkull), nameof(LaughingSkull.PlayAudio))]
+    [HarmonyPatch(typeof(LaughingSkull), "Start")]
     class PatchDeath // : MonoBehaviour
     {
         // Import the necessary function from user32.dll
