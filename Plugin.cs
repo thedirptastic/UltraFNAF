@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using System.Diagnostics;
 using BepInEx.Configuration;
 using HarmonyLib;
 using System;
@@ -15,13 +16,12 @@ using System.Runtime.InteropServices;
 namespace FNAF
 {
     // Load plugin
-    [BepInPlugin("com.derp.fnaf", "UltraFNAF", "1.0.0")]
+    [BepInPlugin("com.derp.fnaf", "UltraFNAF", "1.2.1")]
     [BepInDependency("Hydraxous.ULTRAKILL.Configgy", BepInDependency.DependencyFlags.HardDependency)]
-    public class Plugin : BaseUnityPlugin
+    public class UltraFNAF : BaseUnityPlugin
     {
         private ConfigBuilder config;
-
-        public static Plugin Instance;
+        public static UltraFNAF Instance;
 
         private void Awake()
         {
@@ -35,19 +35,19 @@ namespace FNAF
         }
     }
 
-    // Death behavior
-    [HarmonyPatch(typeof(LaughingSkull), "Start")]
-    class PatchDeath // : MonoBehaviour
+    // Death behavior patch
+    [HarmonyPatch(typeof(NewMovement), "GetHurt")]
+    class GetHurtPatch
     {
-        // Import the necessary function from user32.dll
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         private const int SW_MINIMIZE = 6;
 
-        static void Postfix()
-        {   
-            if(FNAFConfig.modEnabled.Value) {
+        public static void Postfix()
+        {
+            if (NewMovement.Instance.dead && FNAFConfig.modEnabled.Value)
+            {
                 string path = FNAFConfig.gamePath;
                 bool close = FNAFConfig.deathClose.Value;
 
@@ -55,17 +55,17 @@ namespace FNAF
 
                 if (!close)
                 {
-                    Application.Quit();
+                    Process.GetCurrentProcess().Kill();
                 }
                 else
                 {
-                    // Minimize the window using platform-specific functionality
                     IntPtr hWnd = Process.GetCurrentProcess().MainWindowHandle;
                     ShowWindow(hWnd, SW_MINIMIZE);
                 }
             }
         }
     }
+
     public class FNAFConfig : MonoBehaviour
     {
         [Configgable("", "Enable Mod")]
